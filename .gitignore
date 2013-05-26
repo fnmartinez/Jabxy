@@ -1,3 +1,11 @@
+# Eclipse Files
+.settings/
+.project
+
+# Maven compiled directory
+target/
+
+# Java compiled files
 *.class
 
 # Package Files #
