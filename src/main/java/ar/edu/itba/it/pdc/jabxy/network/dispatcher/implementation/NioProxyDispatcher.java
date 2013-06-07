@@ -82,8 +82,7 @@ public class NioProxyDispatcher implements Dispatcher, Runnable {
 			EventHandler handler) throws IOException {
 		channel.configureBlocking(false);
 
-		ProxyHandlerAdapter clientAdapter = new ProxyHandlerAdapter(handler, this,
-				bufferFactory);
+		ProxyHandlerAdapter clientAdapter = new ProxyHandlerAdapter(this, bufferFactory, handler);
 
 		ProxyHandlerAdapter serverAdapter = clientAdapter.getSibling();
 		
