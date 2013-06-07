@@ -1,7 +1,7 @@
 # Eclipse Files
 .settings/
 .project
-
+.classpath
 # Maven compiled directory
 target/
 
