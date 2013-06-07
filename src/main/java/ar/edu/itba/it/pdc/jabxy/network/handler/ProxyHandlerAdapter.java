@@ -22,7 +22,7 @@ public class ProxyHandlerAdapter extends AbstractHandlerAdapter{
 
 	public ProxyHandlerAdapter(Dispatcher dispatcher, BufferFactory bufferFactory, EventHandler eventHandler, ContentHandler contentHandler) {
 		super(dispatcher, new SAXInputQueueImpl(bufferFactory, contentHandler), null, eventHandler);
-		
+		setOutputQueue(new OutputQueueImpl(bufferFactory, this));
 	}
 
 	@Override

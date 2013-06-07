@@ -129,5 +129,8 @@ public abstract class AbstractHandlerAdapter implements HandlerAdapter {
 		return readyOps;
 	}
 
+	public void setOutputQueue(OutputQueue outputQueue){
+		this.outputQueue = outputQueue;
+	}
 	
 }
