@@ -5,14 +5,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-
-import uk.org.retep.niosax.NioSaxParser;
-import uk.org.retep.niosax.NioSaxParserFactory;
 
 import ar.edu.itba.it.pdc.jabxy.network.queues.OutputQueue;
 import ar.edu.itba.it.pdc.jabxy.network.utils.BufferFactory;
