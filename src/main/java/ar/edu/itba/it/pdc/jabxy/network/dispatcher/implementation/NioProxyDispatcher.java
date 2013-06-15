@@ -5,6 +5,8 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.util.concurrent.Executor;
 
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.log4j.Logger;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -37,6 +39,8 @@ public class NioProxyDispatcher extends AbstractNioDispatcher{
 		try {
 			clientAdapter = new ProxyHandlerAdapter(this, bufferFactory, handler, (ContentHandler)handler);
 		} catch (SAXException e) {
+			throw new IOException(e);
+		} catch (ParserConfigurationException e) {
 			throw new IOException(e);
 		}
 

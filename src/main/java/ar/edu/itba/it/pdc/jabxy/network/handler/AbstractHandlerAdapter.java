@@ -46,6 +46,10 @@ public abstract class AbstractHandlerAdapter implements HandlerAdapter {
 	public void setHandler(EventHandler handler) {
 		this.eventHandler = handler;
 	}
+	
+	public EventHandler getHandler() {
+		return this.eventHandler;
+	}
 
 	@Override
 	public int getInterestOps() {
@@ -131,6 +135,11 @@ public abstract class AbstractHandlerAdapter implements HandlerAdapter {
 
 	public void setOutputQueue(OutputQueue outputQueue){
 		this.outputQueue = outputQueue;
+	}
+	
+	//TODO: revisar esto
+	public void setRunning(boolean running) {
+		this.running = running;
 	}
 	
 }

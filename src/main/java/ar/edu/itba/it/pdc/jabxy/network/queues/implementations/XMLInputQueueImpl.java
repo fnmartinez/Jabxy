@@ -3,9 +3,15 @@ package ar.edu.itba.it.pdc.jabxy.network.queues.implementations;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
+import java.nio.charset.Charset;
 import java.util.Deque;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.commons.lang.StringUtils;
+import org.w3c.dom.Document;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
@@ -15,26 +21,35 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import uk.org.retep.niosax.NioSaxParser;
 import uk.org.retep.niosax.NioSaxParserFactory;
+import uk.org.retep.niosax.NioSaxParserHandler;
 import uk.org.retep.niosax.NioSaxSource;
+import uk.org.retep.util.state.TriState;
 import ar.edu.itba.it.pdc.jabxy.network.queues.InputQueue;
+import ar.edu.itba.it.pdc.jabxy.network.queues.XMLValidator;
 import ar.edu.itba.it.pdc.jabxy.network.utils.BufferFactory;
 
-public class SAXInputQueueImpl extends DefaultHandler implements InputQueue {
+import com.google.common.base.Charsets;
+
+public class XMLInputQueueImpl extends DefaultHandler implements InputQueue, NioSaxParserHandler {
 
 	private NioSaxParser parser;
 	private NioSaxSource source;
-	private ContentHandler handler;
+	private XMLValidator validator;
 	private Deque<Element> openedElements;
 	private Deque<Element> closedElements;
+	private Document docClosedElements;
 	private BufferFactory bufferFactory;
 	private String leftOver;
 
-	public SAXInputQueueImpl(BufferFactory bufferFactory, ContentHandler handler)
-			throws SAXException {
+	public XMLInputQueueImpl(BufferFactory bufferFactory, XMLValidator validator)
+			throws SAXException, ParserConfigurationException {
 		this.bufferFactory = bufferFactory;
-		this.handler = handler;
+		this.validator = validator;
 
 		NioSaxParserFactory factory = NioSaxParserFactory.getInstance();
+		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = docFactory.newDocumentBuilder();
+		this.docClosedElements = builder.newDocument();
 		this.parser = factory.newInstance(this);
 		this.parser.startDocument();
 		this.leftOver = "";
@@ -58,7 +73,7 @@ public class SAXInputQueueImpl extends DefaultHandler implements InputQueue {
 
 	@Override
 	public synchronized boolean isEmpty() {
-		return this.openedElements.isEmpty() && this.closedElements.isEmpty();
+		return this.validator.isValidXML();
 	}
 
 	@Override
@@ -116,28 +131,28 @@ public class SAXInputQueueImpl extends DefaultHandler implements InputQueue {
 
 	@Override
 	public void setDocumentLocator(Locator locator) {
-		this.handler.setDocumentLocator(locator);
+		this.validator.setDocumentLocator(locator);
 	}
 
 	@Override
 	public void startDocument() throws SAXException {
-		this.handler.startDocument();
+		this.validator.startDocument();
 	}
 
 	@Override
 	public void endDocument() throws SAXException {
-		this.handler.endDocument();
+		this.validator.endDocument();
 	}
 
 	@Override
 	public void startPrefixMapping(String prefix, String uri)
 			throws SAXException {
-		this.handler.startPrefixMapping(prefix, uri);
+		this.validator.startPrefixMapping(prefix, uri);
 	}
 
 	@Override
 	public void endPrefixMapping(String prefix) throws SAXException {
-		this.handler.endPrefixMapping(prefix);
+		this.validator.endPrefixMapping(prefix);
 	}
 
 	@Override
@@ -148,7 +163,7 @@ public class SAXInputQueueImpl extends DefaultHandler implements InputQueue {
 					"Namespaces and qualified names not available.");
 		}
 		this.openedElements.add(new Element(uri, localName, qName, atts));
-		this.handler.startElement(uri, localName, qName, atts);
+		this.validator.startElement(uri, localName, qName, atts);
 	}
 
 	@Override
@@ -164,31 +179,31 @@ public class SAXInputQueueImpl extends DefaultHandler implements InputQueue {
 			e.close();
 			this.closedElements.push(e);
 		}
-		this.handler.endElement(uri, localName, qName);
+		this.validator.endElement(uri, localName, qName);
 	}
 
 	@Override
 	public void characters(char[] ch, int start, int length)
 			throws SAXException {
 		this.openedElements.peek().setContent(ch, start, length);
-		this.handler.characters(ch, start, length);
+		this.validator.characters(ch, start, length);
 	}
 
 	@Override
 	public void ignorableWhitespace(char[] ch, int start, int length)
 			throws SAXException {
-		this.handler.ignorableWhitespace(ch, start, length);
+		this.validator.ignorableWhitespace(ch, start, length);
 	}
 
 	@Override
 	public void processingInstruction(String target, String data)
 			throws SAXException {
-		this.handler.processingInstruction(target, data);
+		this.validator.processingInstruction(target, data);
 	}
 
 	@Override
 	public void skippedEntity(String name) throws SAXException {
-		this.handler.skippedEntity(name);
+		this.validator.skippedEntity(name);
 	}
 
 	@Override
@@ -290,6 +305,16 @@ public class SAXInputQueueImpl extends DefaultHandler implements InputQueue {
 				sb.append('>');
 			}
 			return sb.toString();
+		}
+		
+	}
+
+	@Override
+	public void xmlDeclaration(String versionInfo, String encoding,
+			TriState standalone) {
+		// TODO Auto-generated method stub
+		if (!Charset.forName(encoding).equals(Charsets.UTF_8)) {
+			// Cortar conexión
 		}
 		
 	}
