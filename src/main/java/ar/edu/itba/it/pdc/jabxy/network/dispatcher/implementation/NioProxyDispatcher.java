@@ -8,7 +8,6 @@ import java.util.concurrent.Executor;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.Logger;
-import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import ar.edu.itba.it.pdc.jabxy.network.dispatcher.SelectorGuard;
@@ -16,17 +15,17 @@ import ar.edu.itba.it.pdc.jabxy.network.handler.AbstractHandlerAdapter;
 import ar.edu.itba.it.pdc.jabxy.network.handler.EventHandler;
 import ar.edu.itba.it.pdc.jabxy.network.handler.HandlerAdapter;
 import ar.edu.itba.it.pdc.jabxy.network.handler.ProxyHandlerAdapter;
-import ar.edu.itba.it.pdc.jabxy.network.utils.BufferFactory;
+import ar.edu.itba.it.pdc.jabxy.network.queues.InputQueueFactory;
+import ar.edu.itba.it.pdc.jabxy.network.queues.OutputQueueFactory;
+import ar.edu.itba.it.pdc.jabxy.network.queues.exceptions.QueueBuildingException;
 import ar.edu.itba.it.pdc.jabxy.network.utils.ChannelFacade;
 
 public class NioProxyDispatcher extends AbstractNioDispatcher{
 	
 	private final Logger logger = Logger.getLogger(getClass().getName());
-	private final BufferFactory bufferFactory;
 	
-	public NioProxyDispatcher(Executor executor, BufferFactory bufferFactory, SelectorGuard guard) throws IOException{
-		super(executor, guard);
-		this.bufferFactory = bufferFactory;
+	public NioProxyDispatcher(Executor executor, SelectorGuard guard, InputQueueFactory inputQueueFactory, OutputQueueFactory outputQueueFactory) throws IOException{
+		super(executor, guard, inputQueueFactory, outputQueueFactory);
 	}
 	
 
@@ -37,10 +36,12 @@ public class NioProxyDispatcher extends AbstractNioDispatcher{
 
 		ProxyHandlerAdapter clientAdapter;
 		try {
-			clientAdapter = new ProxyHandlerAdapter(this, bufferFactory, handler, handler);
+			clientAdapter = new ProxyHandlerAdapter(this, inputQueueFactory.newInputQueue(), outputQueueFactory.newOutputQueue(), handler);
 		} catch (SAXException e) {
 			throw new IOException(e);
 		} catch (ParserConfigurationException e) {
+			throw new IOException(e);
+		} catch (QueueBuildingException e) {
 			throw new IOException(e);
 		}
 

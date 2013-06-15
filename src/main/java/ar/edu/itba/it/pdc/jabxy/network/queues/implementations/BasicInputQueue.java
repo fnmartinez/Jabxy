@@ -7,12 +7,12 @@ import java.nio.channels.ByteChannel;
 import ar.edu.itba.it.pdc.jabxy.network.queues.InputQueue;
 import ar.edu.itba.it.pdc.jabxy.network.utils.BufferFactory;
 
-public class InputQueueImpl implements InputQueue {
+public class BasicInputQueue implements InputQueue {
 	private final BufferFactory bufferFactory;
 	private final ByteBuffer emptyBuffer;
 	private ByteBuffer buffer = null;
 
-	public InputQueueImpl(BufferFactory bufferFactory) {
+	public BasicInputQueue(BufferFactory bufferFactory) {
 		this.bufferFactory = bufferFactory;
 		emptyBuffer = ByteBuffer.allocate(0).asReadOnlyBuffer();
 	}
@@ -86,5 +86,9 @@ public class InputQueueImpl implements InputQueue {
 
 	public void discardBytes(int count) {
 		dequeueBytes(count);
+	}
+	
+	protected ByteBuffer getCurrentMessage() {
+		return this.buffer;
 	}
 }

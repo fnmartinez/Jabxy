@@ -8,19 +8,16 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
 import ar.edu.itba.it.pdc.jabxy.network.dispatcher.Dispatcher;
-import ar.edu.itba.it.pdc.jabxy.network.queues.implementations.InputQueueImpl;
-import ar.edu.itba.it.pdc.jabxy.network.queues.implementations.OutputQueueImpl;
-import ar.edu.itba.it.pdc.jabxy.network.utils.BufferFactory;
+import ar.edu.itba.it.pdc.jabxy.network.queues.InputQueue;
+import ar.edu.itba.it.pdc.jabxy.network.queues.OutputQueue;
 
 public class ServerHandlerAdapter extends AbstractHandlerAdapter {
 
 	private final Object stateChangeLock = new Object();
 	private boolean shuttingDown = false;
 
-	public ServerHandlerAdapter(EventHandler clientHandler, Dispatcher dispatcher,
-			BufferFactory bufferFactory) {
-		super(dispatcher, new InputQueueImpl(bufferFactory), null, clientHandler);
-		setOutputQueue(new OutputQueueImpl(bufferFactory, this));
+	public ServerHandlerAdapter(Dispatcher dispatcher, InputQueue inputQueue, OutputQueue outputQueue, EventHandler clientHandler) {
+		super(dispatcher, inputQueue, outputQueue, clientHandler);
 	}
 
 	// ------------------------------------------------------------

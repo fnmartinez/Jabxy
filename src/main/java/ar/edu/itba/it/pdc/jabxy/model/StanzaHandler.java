@@ -3,7 +3,6 @@ package ar.edu.itba.it.pdc.jabxy.model;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
-import java.util.Deque;
 
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
@@ -13,21 +12,16 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.commons.lang.StringUtils;
-import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
 import ar.edu.itba.it.pdc.jabxy.model.stanzas.Stanza;
 import ar.edu.itba.it.pdc.jabxy.network.handler.EventHandler;
-import ar.edu.itba.it.pdc.jabxy.network.queues.XMLValidator;
 import ar.edu.itba.it.pdc.jabxy.network.utils.ChannelFacade;
 
-public class StanzaHandler extends DefaultHandler implements EventHandler{
+public class StanzaHandler implements EventHandler{
 	
 	private JabberUser user;
 	private JabberProtocol protocol;
-	private boolean startingCommunication = false;
 	private TransformerFactory transFactory;
 	private Transformer transformer;
 	
@@ -60,7 +54,7 @@ public class StanzaHandler extends DefaultHandler implements EventHandler{
 			e.printStackTrace();
 		}		
 		
-		if (user.getFilter().filter(stanza)) {
+		if (user.getFilters().filter(stanza)) {
 			stanza = user.getTransformations().transform(stanza);
 		}
 		

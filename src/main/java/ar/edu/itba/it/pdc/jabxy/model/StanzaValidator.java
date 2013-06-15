@@ -1,5 +1,7 @@
 package ar.edu.itba.it.pdc.jabxy.model;
 
+import java.nio.ByteBuffer;
+
 import org.apache.commons.lang.StringUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -61,9 +63,15 @@ public class StanzaValidator extends DefaultHandler implements XMLValidator {
 	}
 
 	@Override
-	public boolean isValidXML() {
+	public int isValidMessage() {
 		// TODO Auto-generated method stub
-		return false;
+		return 0;
+	}
+
+	@Override
+	public int isValidMessage(ByteBuffer message) {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 }

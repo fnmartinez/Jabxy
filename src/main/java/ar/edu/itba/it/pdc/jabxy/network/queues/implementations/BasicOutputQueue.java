@@ -11,15 +11,14 @@ import ar.edu.itba.it.pdc.jabxy.network.queues.OutputQueue;
 import ar.edu.itba.it.pdc.jabxy.network.utils.BufferFactory;
 import ar.edu.itba.it.pdc.jabxy.network.utils.ChannelFacade;
 
-public class OutputQueueImpl implements OutputQueue {
+public class BasicOutputQueue implements OutputQueue {
 	private final BufferFactory bufferFactory;
-	private final ChannelFacade facade;
 	private final Deque<ByteBuffer> queue;
+	private ChannelFacade facade;
 	private ByteBuffer active = null;
 
-	public OutputQueueImpl(BufferFactory bufferFactory, ChannelFacade adapter) {
+	public BasicOutputQueue(BufferFactory bufferFactory) {
 		this.bufferFactory = bufferFactory;
-		this.facade = adapter;
 		queue = new LinkedList<ByteBuffer>();
 	}
 
@@ -77,7 +76,9 @@ public class OutputQueueImpl implements OutputQueue {
 			queue.addLast(newBuf);
 		}
 
-		facade.modifyInterestOps(SelectionKey.OP_WRITE, 0);
+		if (facade == null) {
+			facade.modifyInterestOps(SelectionKey.OP_WRITE, 0);
+		}
 
 		return true;
 	}
@@ -91,5 +92,10 @@ public class OutputQueueImpl implements OutputQueue {
 				dest.put(src.get());
 			}
 		}
+	}
+
+	@Override
+	public void setChannelFacade(ChannelFacade channelFacade) {
+		this.facade = channelFacade;
 	}
 }

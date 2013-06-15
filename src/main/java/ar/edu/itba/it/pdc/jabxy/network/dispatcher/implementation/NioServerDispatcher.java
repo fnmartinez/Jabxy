@@ -11,19 +11,18 @@ import ar.edu.itba.it.pdc.jabxy.network.dispatcher.SelectorGuard;
 import ar.edu.itba.it.pdc.jabxy.network.handler.EventHandler;
 import ar.edu.itba.it.pdc.jabxy.network.handler.HandlerAdapter;
 import ar.edu.itba.it.pdc.jabxy.network.handler.ServerHandlerAdapter;
-import ar.edu.itba.it.pdc.jabxy.network.utils.BufferFactory;
+import ar.edu.itba.it.pdc.jabxy.network.queues.InputQueueFactory;
+import ar.edu.itba.it.pdc.jabxy.network.queues.OutputQueueFactory;
+import ar.edu.itba.it.pdc.jabxy.network.queues.exceptions.QueueBuildingException;
 import ar.edu.itba.it.pdc.jabxy.network.utils.ChannelFacade;
 
 public class NioServerDispatcher extends AbstractNioDispatcher {
 	// TODO: revisar la posibilidad de cambiar a AtomicReference el Selector
 	// para evitar el SelectorGuard
 	private final Logger logger = Logger.getLogger(getClass().getName());
-	private final BufferFactory bufferFactory;
 
-	public NioServerDispatcher(Executor executor, BufferFactory bufferFactory,
-			SelectorGuard guard) throws IOException {
-		super(executor, guard);
-		this.bufferFactory = bufferFactory;
+	public NioServerDispatcher(Executor executor, SelectorGuard guard, InputQueueFactory inputQueueFactory, OutputQueueFactory outputQueueFactory) throws IOException {
+		super(executor, guard, inputQueueFactory, outputQueueFactory);
 	}
 
 	@Override
@@ -31,8 +30,12 @@ public class NioServerDispatcher extends AbstractNioDispatcher {
 			EventHandler handler) throws IOException {
 		channel.configureBlocking(false);
 
-		ServerHandlerAdapter adapter = new ServerHandlerAdapter(handler, this,
-				bufferFactory);
+		ServerHandlerAdapter adapter;
+		try {
+			adapter = new ServerHandlerAdapter(this, inputQueueFactory.newInputQueue(), outputQueueFactory.newOutputQueue(), handler);
+		} catch (QueueBuildingException e) {
+			throw new IOException(e);
+		}
 
 		adapter.registering();
 

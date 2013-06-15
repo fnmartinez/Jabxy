@@ -15,6 +15,8 @@ import ar.edu.itba.it.pdc.jabxy.network.dispatcher.SelectorGuard;
 import ar.edu.itba.it.pdc.jabxy.network.handler.HandlerAdapter;
 import ar.edu.itba.it.pdc.jabxy.network.handler.HandlerFutureTask;
 import ar.edu.itba.it.pdc.jabxy.network.handler.ServerHandlerAdapter;
+import ar.edu.itba.it.pdc.jabxy.network.queues.InputQueueFactory;
+import ar.edu.itba.it.pdc.jabxy.network.queues.OutputQueueFactory;
 
 public abstract class AbstractNioDispatcher implements Dispatcher, Runnable {
 	// TODO: revisar la posibilidad de cambiar a AtomicReference el Selector
@@ -25,8 +27,12 @@ public abstract class AbstractNioDispatcher implements Dispatcher, Runnable {
 	private final BlockingQueue<HandlerAdapter> statusChangeQueue;
 	private final SelectorGuard guard;
 	private volatile boolean dispatching = true;
+	protected final InputQueueFactory inputQueueFactory;
+	protected final OutputQueueFactory outputQueueFactory;
 	
-	public AbstractNioDispatcher(Executor executor, SelectorGuard guard) throws IOException{
+	public AbstractNioDispatcher(Executor executor, SelectorGuard guard, InputQueueFactory inputQueueFactory, OutputQueueFactory outputQueueFactory) throws IOException{
+		this.inputQueueFactory = inputQueueFactory;
+		this.outputQueueFactory = outputQueueFactory;
 		this.executor = executor;
 		this.guard = guard;
 		
