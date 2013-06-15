@@ -76,7 +76,7 @@ public class BasicOutputQueue implements OutputQueue {
 			queue.addLast(newBuf);
 		}
 
-		if (facade == null) {
+		if (facade != null) {
 			facade.modifyInterestOps(SelectionKey.OP_WRITE, 0);
 		}
 

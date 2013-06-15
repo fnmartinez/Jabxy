@@ -7,7 +7,7 @@ public abstract class OutputQueueFactory {
 
 	private static BufferFactory defaultBufferFactory = new DumbBufferFactory(1024);
 	
-	public static OutputQueueFactory newOutputQueueFactory() {
+	public static OutputQueueFactory newInstance() {
 		return new BasicOutputFactory(defaultBufferFactory);
 	}
 	
