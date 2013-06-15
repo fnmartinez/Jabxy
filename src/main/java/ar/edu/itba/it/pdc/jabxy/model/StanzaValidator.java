@@ -12,10 +12,10 @@ import ar.edu.itba.it.pdc.jabxy.network.queues.XMLValidator;
 public class StanzaValidator extends DefaultHandler implements XMLValidator {
 
 	private boolean startingCommunication = false;
+	private String[] validTags = {"stream", "message", "presence", "IQ"};
 	
 	@Override
 	public void startDocument() throws SAXException {
-		// TODO Auto-generated method stub
 		this.startingCommunication = true;
 	}
 
@@ -59,7 +59,7 @@ public class StanzaValidator extends DefaultHandler implements XMLValidator {
 	public void characters(char[] ch, int start, int length)
 			throws SAXException {
 		// TODO Auto-generated method stub
-		
+		//Se llama siempre que dentro del tag haya algo, no importa si es contenido u otro tag hijo.
 	}
 
 	@Override
