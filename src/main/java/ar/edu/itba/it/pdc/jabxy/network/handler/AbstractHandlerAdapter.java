@@ -11,7 +11,7 @@ public abstract class AbstractHandlerAdapter implements HandlerAdapter {
 
 	private final Dispatcher dispatcher;
 	private final InputQueue inputQueue;
-	private OutputQueue outputQueue;
+	private final OutputQueue outputQueue;
 	private final Object stateChangeLock = new Object();
 	private EventHandler eventHandler;
 	private SelectionKey key = null;
@@ -27,6 +27,7 @@ public abstract class AbstractHandlerAdapter implements HandlerAdapter {
 		this.inputQueue = inputQueue;
 		this.outputQueue = outputQueue;
 		this.eventHandler = eventHandler;
+		this.outputQueue.setChannelFacade(this);
 	}
 
 	@Override
@@ -133,10 +134,6 @@ public abstract class AbstractHandlerAdapter implements HandlerAdapter {
 		return readyOps;
 	}
 
-	public void setOutputQueue(OutputQueue outputQueue){
-		this.outputQueue = outputQueue;
-	}
-	
 	//TODO: revisar esto
 	public void setRunning(boolean running) {
 		this.running = running;

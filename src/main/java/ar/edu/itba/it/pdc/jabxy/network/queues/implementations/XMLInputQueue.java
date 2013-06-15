@@ -30,7 +30,7 @@ import ar.edu.itba.it.pdc.jabxy.network.utils.BufferFactory;
 
 import com.google.common.base.Charsets;
 
-public class XMLInputQueueImpl extends DefaultHandler implements InputQueue, NioSaxParserHandler {
+public class XMLInputQueue extends DefaultHandler implements InputQueue, NioSaxParserHandler {
 
 	private NioSaxParser parser;
 	private NioSaxSource source;
@@ -41,15 +41,15 @@ public class XMLInputQueueImpl extends DefaultHandler implements InputQueue, Nio
 	private BufferFactory bufferFactory;
 	private String leftOver;
 
-	public XMLInputQueueImpl(BufferFactory bufferFactory, XMLValidator validator)
+	public XMLInputQueue(BufferFactory bufferFactory, XMLValidator validator)
 			throws SAXException, ParserConfigurationException {
 		this.bufferFactory = bufferFactory;
 		this.validator = validator;
 
 		NioSaxParserFactory factory = NioSaxParserFactory.getInstance();
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder builder = docFactory.newDocumentBuilder();
-		this.docClosedElements = builder.newDocument();
+		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+		this.docClosedElements = docBuilder.newDocument();
 		this.parser = factory.newInstance(this);
 		this.parser.startDocument();
 		this.leftOver = "";
@@ -73,7 +73,7 @@ public class XMLInputQueueImpl extends DefaultHandler implements InputQueue, Nio
 
 	@Override
 	public synchronized boolean isEmpty() {
-		return this.validator.isValidXML();
+		return this.validator.isValidMessage() != -1;
 	}
 
 	@Override

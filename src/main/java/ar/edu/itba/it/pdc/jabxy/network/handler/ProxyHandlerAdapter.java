@@ -8,10 +8,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 
 import ar.edu.itba.it.pdc.jabxy.network.dispatcher.Dispatcher;
-import ar.edu.itba.it.pdc.jabxy.network.queues.XMLValidator;
-import ar.edu.itba.it.pdc.jabxy.network.queues.implementations.OutputQueueImpl;
-import ar.edu.itba.it.pdc.jabxy.network.queues.implementations.XMLInputQueueImpl;
-import ar.edu.itba.it.pdc.jabxy.network.utils.BufferFactory;
+import ar.edu.itba.it.pdc.jabxy.network.queues.InputQueue;
+import ar.edu.itba.it.pdc.jabxy.network.queues.OutputQueue;
 
 public class ProxyHandlerAdapter extends AbstractHandlerAdapter{
 	
@@ -19,9 +17,8 @@ public class ProxyHandlerAdapter extends AbstractHandlerAdapter{
 	private SelectableChannel outputChannel = null;
 	private boolean shuttingDown = false;
 
-	public ProxyHandlerAdapter(Dispatcher dispatcher, BufferFactory bufferFactory, EventHandler eventHandler, XMLValidator validator) throws SAXException, ParserConfigurationException {
-		super(dispatcher, new XMLInputQueueImpl(bufferFactory, validator), null, eventHandler);
-		setOutputQueue(new OutputQueueImpl(bufferFactory, this));
+	public ProxyHandlerAdapter(Dispatcher dispatcher, InputQueue inputQueue, OutputQueue outputQueue, EventHandler eventHandler) throws SAXException, ParserConfigurationException {
+		super(dispatcher, inputQueue, outputQueue, eventHandler);
 	}
 
 	@Override
