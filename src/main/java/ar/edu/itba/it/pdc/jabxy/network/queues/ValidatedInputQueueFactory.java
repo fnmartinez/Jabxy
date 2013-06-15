@@ -22,16 +22,27 @@ public class ValidatedInputQueueFactory extends InputQueueFactory {
 
 	@Override
 	public InputQueue newInputQueue() throws QueueBuildingException {
-		if (XMLValidator.class.isAssignableFrom(this.validator.getClass())) {
+		
+		MessageValidator newValidator = null;
+		
+		try {
+			newValidator = (MessageValidator)Class.forName(validator.getClass().getName()).newInstance();
+		} catch (InstantiationException | IllegalAccessException
+				| ClassNotFoundException e1) {
+			//TODO: mostrar el error correspondiente. LOGGER!!
+			e1.printStackTrace();
+		}
+		
+		if (XMLValidator.class.isAssignableFrom(newValidator.getClass())) {
 			try {
-				return new XMLInputQueue(bufferFactory, ((XMLValidator)validator));
+				return new XMLInputQueue(bufferFactory, ((XMLValidator)newValidator));
 			} catch (SAXException e) {
 				throw new QueueBuildingException(e);
 			} catch (ParserConfigurationException e) {
 				throw new QueueBuildingException(e);
 			}
 		}
-		return new ValidatedInputQueue(bufferFactory, validator);
+		return new ValidatedInputQueue(bufferFactory, newValidator);
 	}
 
 }

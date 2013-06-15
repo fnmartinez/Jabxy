@@ -6,17 +6,12 @@ import java.nio.channels.ByteChannel;
 import java.nio.charset.Charset;
 import java.util.Deque;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.lang.StringUtils;
-import org.w3c.dom.Document;
 import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import uk.org.retep.niosax.NioSaxParser;
@@ -35,9 +30,8 @@ public class XMLInputQueue extends DefaultHandler implements InputQueue, NioSaxP
 	private NioSaxParser parser;
 	private NioSaxSource source;
 	private XMLValidator validator;
-	private Deque<Element> openedElements;
-	private Deque<Element> closedElements;
-	private Document docClosedElements;
+	private Deque<ByteBuffer> inputs;
+	private Deque<ByteBuffer> validatedElements;
 	private BufferFactory bufferFactory;
 	private String leftOver;
 
@@ -47,9 +41,6 @@ public class XMLInputQueue extends DefaultHandler implements InputQueue, NioSaxP
 		this.validator = validator;
 
 		NioSaxParserFactory factory = NioSaxParserFactory.getInstance();
-		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-		this.docClosedElements = docBuilder.newDocument();
 		this.parser = factory.newInstance(this);
 		this.parser.startDocument();
 		this.leftOver = "";
@@ -67,13 +58,38 @@ public class XMLInputQueue extends DefaultHandler implements InputQueue, NioSaxP
 		} catch (SAXException e) {
 			throw new IOException(e);
 		}
+		
+		this.inputs.push(buffer);
+		
 		this.source.compact();
 		return bytesRead;
 	}
 
+	public void getValidated(){
+		
+		if(this.validator.isValidMessage() != -1){
+			int size = 0;
+			for(ByteBuffer b : this.inputs){
+				size += b.limit();
+			}
+			
+			ByteBuffer concatenation = ByteBuffer.allocate(size);
+			int allocatedSize = 0;
+			
+			while(!this.inputs.isEmpty()){
+				ByteBuffer b = this.inputs.poll();
+				int bSize = b.limit();
+				allocatedSize += bSize;
+				concatenation.put(b.array(), allocatedSize, bSize);
+			}
+			
+			validatedElements.push(concatenation);
+		}
+	}
+	
 	@Override
 	public synchronized boolean isEmpty() {
-		return this.validator.isValidMessage() != -1;
+		return validatedElements.isEmpty();
 	}
 
 	@Override
@@ -83,26 +99,18 @@ public class XMLInputQueue extends DefaultHandler implements InputQueue, NioSaxP
 
 	@Override
 	public ByteBuffer dequeueBytes(int count) {
-		StringBuffer sb = new StringBuffer(this.leftOver);
-		while (!this.closedElements.isEmpty()) {
-			Element e = this.closedElements.pop();
-			int endOfElement = 0;
-			if ((endOfElement = sb.indexOf("</")) != -1) {
-				endOfElement--;
-				sb.indexOf(e.toString(), endOfElement);
-			} else {
-				sb.append(e.toString());
-			}
-			if (sb.length() >= count) {
-				break;
+		ByteBuffer result = ByteBuffer.allocate(count);
+		while (!this.validatedElements.isEmpty()) {
+			ByteBuffer e = this.validatedElements.poll();
+			e.get(result.array());
+			if(count < e.limit()){
+				validatedElements.addFirst(e);
+			}else{
+				count -= e.limit();
 			}
 		}
 
-		this.leftOver = sb.substring(count, sb.length());
-
-		ByteBuffer bf = ByteBuffer.allocate(sb.length());
-		bf.put(sb.substring(0, count).getBytes());
-		return bf;
+		return result;
 	}
 
 	@Override
@@ -110,49 +118,37 @@ public class XMLInputQueue extends DefaultHandler implements InputQueue, NioSaxP
 		this.leftOver = this.leftOver.substring(count);
 	}
 
-	public String getClosedElements() {
-		StringBuffer sb = new StringBuffer();
-		while (!this.closedElements.isEmpty()) {
-			Element e = this.closedElements.poll();
-			this.closedElements.pop();
-			int endOfElement = 0;
-			if ((endOfElement = sb.indexOf("</")) != -1) {
-				endOfElement--;
-				sb.indexOf(e.toString(), endOfElement);
-			} else {
-				sb.append(e.toString());
-			}
-		}
-
-		return sb.toString();
-	}
-
 	// XXX: ContentHandler interface Overridal
 
 	@Override
 	public void setDocumentLocator(Locator locator) {
 		this.validator.setDocumentLocator(locator);
+		getValidated();
 	}
 
 	@Override
 	public void startDocument() throws SAXException {
 		this.validator.startDocument();
+		getValidated();
 	}
 
 	@Override
 	public void endDocument() throws SAXException {
 		this.validator.endDocument();
+		getValidated();
 	}
 
 	@Override
 	public void startPrefixMapping(String prefix, String uri)
 			throws SAXException {
 		this.validator.startPrefixMapping(prefix, uri);
+		getValidated();
 	}
 
 	@Override
 	public void endPrefixMapping(String prefix) throws SAXException {
 		this.validator.endPrefixMapping(prefix);
+		getValidated();
 	}
 
 	@Override
@@ -162,8 +158,8 @@ public class XMLInputQueue extends DefaultHandler implements InputQueue, NioSaxP
 			throw new SAXException(
 					"Namespaces and qualified names not available.");
 		}
-		this.openedElements.add(new Element(uri, localName, qName, atts));
 		this.validator.startElement(uri, localName, qName, atts);
+		getValidated();
 	}
 
 	@Override
@@ -173,140 +169,35 @@ public class XMLInputQueue extends DefaultHandler implements InputQueue, NioSaxP
 			throw new SAXException(
 					"Namespaces and qualified names not not avilable");
 		}
-		Element e = this.openedElements.pop();
-		if ((!StringUtils.isEmpty(e.qName) && e.getQName().equalsIgnoreCase(qName))
-				|| (!StringUtils.isEmpty(e.localName) && e.getLocalName().equalsIgnoreCase(localName))) {
-			e.close();
-			this.closedElements.push(e);
-		}
 		this.validator.endElement(uri, localName, qName);
+		getValidated();
 	}
 
 	@Override
 	public void characters(char[] ch, int start, int length)
 			throws SAXException {
-		this.openedElements.peek().setContent(ch, start, length);
 		this.validator.characters(ch, start, length);
+		getValidated();
 	}
 
 	@Override
 	public void ignorableWhitespace(char[] ch, int start, int length)
 			throws SAXException {
 		this.validator.ignorableWhitespace(ch, start, length);
+		getValidated();
 	}
 
 	@Override
 	public void processingInstruction(String target, String data)
 			throws SAXException {
 		this.validator.processingInstruction(target, data);
+		getValidated();
 	}
 
 	@Override
 	public void skippedEntity(String name) throws SAXException {
 		this.validator.skippedEntity(name);
-	}
-
-	@Override
-	public void warning(SAXParseException e) throws SAXException {
-		// TODO:
-	}
-
-	@Override
-	public void error(SAXParseException e) throws SAXException {
-		// TODO:
-	}
-
-	@Override
-	public void fatalError(SAXParseException e) throws SAXException {
-		// TODO:
-	}
-
-	private class Element {
-		private final String uri;
-		private final String localName;
-		private final String qName;
-		private final Attributes attributes;
-		private StringBuffer content;
-		private boolean closed;
-
-		public Element(String uri, String localName, String qName,
-				Attributes attributes) {
-			this.uri = uri;
-			this.localName = localName;
-			this.qName = qName;
-			this.attributes = attributes;
-			this.closed = false;
-		}
-
-		public void setContent(char cs[], int start, int len) {
-			content.append(cs, start, len);
-		}
-
-		public boolean isClosed() {
-			return this.closed;
-		}
-
-		public void close() {
-			this.closed = true;
-		}
-
-		public String getUri() {
-			return this.uri;
-		}
-
-		public String getLocalName() {
-			return this.localName;
-		}
-
-		public String getQName() {
-			return this.qName;
-		}
-
-		public Attributes getAttributes() {
-			return this.attributes;
-		}
-
-		public String getContent() {
-			return this.content.toString();
-		}
-		
-		public String getTagname() {
-			return (!StringUtils.isEmpty(this.qName) ? this.qName
-					: this.localName);
-		}
-
-		public String toString() {
-			// TODO
-			StringBuffer sb = new StringBuffer();
-
-			sb.append('<');
-			sb.append(getTagname());
-			sb.append(' ');
-			sb.append("xmlns='" + this.uri + "'");
-			for (int i = 0; i < this.attributes.getLength(); i++) {
-				sb.append(' ');
-				if (!StringUtils.isEmpty(uri)) {
-					sb.append("xmlns='" + this.uri + "'");
-				}
-				if (!StringUtils.isEmpty(attributes.getQName(i))) {
-					sb.append(attributes.getQName(i));
-				} else if (!StringUtils.isEmpty(attributes.getLocalName(i))) {
-					sb.append(attributes.getLocalName(i));
-				}
-				sb.append("=\"");
-				sb.append(attributes.getValue(i));
-				sb.append("\"");
-			}
-			sb.append('>');
-			sb.append(content);
-			if (closed) {
-				sb.append("</");
-				sb.append(getTagname());
-				sb.append('>');
-			}
-			return sb.toString();
-		}
-		
+		getValidated();
 	}
 
 	@Override
