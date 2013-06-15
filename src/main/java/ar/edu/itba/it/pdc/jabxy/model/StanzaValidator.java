@@ -1,6 +1,8 @@
 package ar.edu.itba.it.pdc.jabxy.model;
 
 import java.nio.ByteBuffer;
+import java.util.Deque;
+import java.util.LinkedList;
 
 import org.apache.commons.lang.StringUtils;
 import org.xml.sax.Attributes;
@@ -12,7 +14,8 @@ import ar.edu.itba.it.pdc.jabxy.network.queues.XMLValidator;
 public class StanzaValidator extends DefaultHandler implements XMLValidator {
 
 	private boolean startingCommunication = false;
-	private String[] validTags = {"stream", "message", "presence", "IQ"};
+	private boolean waitingForStreamClose = false;
+	private Deque<String> tagDeque = new LinkedList<String>();
 	
 	@Override
 	public void startDocument() throws SAXException {
@@ -44,28 +47,42 @@ public class StanzaValidator extends DefaultHandler implements XMLValidator {
 		// TODO Auto-generated method stub
 		if (startingCommunication && ((StringUtils.isNotBlank(localName) && localName.equalsIgnoreCase("stream:stream")) ||
 				(StringUtils.isNotBlank(qName) && qName.equalsIgnoreCase("stream")))) {
-			
+			this.waitingForStreamClose = true;
+		}else{
+			tagDeque.push(qName);
 		}
+		
+		
 	}
 
 	@Override
 	public void endElement(String uri, String localName, String qName)
 			throws SAXException {
-		// TODO Auto-generated method stub
 		
+		if(qName == tagDeque.peek()){
+			tagDeque.pop();
+		}else if(((StringUtils.isNotBlank(localName) && localName.equalsIgnoreCase("stream:stream")) ||
+				(StringUtils.isNotBlank(qName) && qName.equalsIgnoreCase("stream")))){
+			this.waitingForStreamClose = false;
+		}else{
+			throw new SAXException();
+		}
 	}
 
 	@Override
 	public void characters(char[] ch, int start, int length)
 			throws SAXException {
 		// TODO Auto-generated method stub
-		//Se llama siempre que dentro del tag haya algo, no importa si es contenido u otro tag hijo.
 	}
 
 	@Override
 	public int isValidMessage() {
-		// TODO Auto-generated method stub
-		return 0;
+		
+		if(this.tagDeque.size() == 0){
+			return 1;
+		}else{
+			return -1;
+		}
 	}
 
 	@Override
