@@ -23,9 +23,8 @@ import ar.edu.itba.it.pdc.jabxy.network.handler.EventHandler;
 import ar.edu.itba.it.pdc.jabxy.network.queues.XMLValidator;
 import ar.edu.itba.it.pdc.jabxy.network.utils.ChannelFacade;
 
-public class StanzaHandler extends DefaultHandler implements EventHandler, XMLValidator {
+public class StanzaHandler extends DefaultHandler implements EventHandler{
 	
-	private Deque<String> elements;
 	private JabberUser user;
 	private JabberProtocol protocol;
 	private boolean startingCommunication = false;
@@ -79,6 +78,10 @@ public class StanzaHandler extends DefaultHandler implements EventHandler, XMLVa
 		
 		channelFacade.outputQueue().enqueue(bf);
 	}
+	
+	public JabberUser getUser() {
+		return this.user;
+	}
 
 	@Override
 	public void starting(ChannelFacade channelFacade) {
@@ -102,67 +105,6 @@ public class StanzaHandler extends DefaultHandler implements EventHandler, XMLVa
 	public void stopped(ChannelFacade channelFacade) {
 		// TODO Auto-generated method stub
 		
-	}
-	
-	//XXX: Methods for ContentHandling
-
-	@Override
-	public void startDocument() throws SAXException {
-		// TODO Auto-generated method stub
-		this.startingCommunication = true;
-	}
-
-	@Override
-	public void endDocument() throws SAXException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void startPrefixMapping(String prefix, String uri)
-			throws SAXException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void endPrefixMapping(String prefix) throws SAXException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void startElement(String uri, String localName, String qName,
-			Attributes atts) throws SAXException {
-		// TODO Auto-generated method stub
-		if (startingCommunication && ((StringUtils.isNotBlank(localName) && localName.equalsIgnoreCase("stream:stream")) ||
-				(StringUtils.isNotBlank(qName) && qName.equalsIgnoreCase("stream")))) {
-			
-		}
-	}
-
-	@Override
-	public void endElement(String uri, String localName, String qName)
-			throws SAXException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void characters(char[] ch, int start, int length)
-			throws SAXException {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	public JabberUser getUser() {
-		return this.user;
-	}
-
-	@Override
-	public boolean isValidXML() {
-		// TODO Auto-generated method stub
-		return false;
 	}
 
 }

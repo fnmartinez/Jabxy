@@ -37,7 +37,7 @@ public class NioProxyDispatcher extends AbstractNioDispatcher{
 
 		ProxyHandlerAdapter clientAdapter;
 		try {
-			clientAdapter = new ProxyHandlerAdapter(this, bufferFactory, handler, (ContentHandler)handler);
+			clientAdapter = new ProxyHandlerAdapter(this, bufferFactory, handler, handler);
 		} catch (SAXException e) {
 			throw new IOException(e);
 		} catch (ParserConfigurationException e) {
