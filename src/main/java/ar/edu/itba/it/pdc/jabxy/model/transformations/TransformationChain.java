@@ -27,4 +27,8 @@ public class TransformationChain {
 	public void remove(Transformation t) {
 		this.transformations.remove(t);
 	}
+	
+	public int countTransformations(){
+		return transformations.size();
+	}
 }

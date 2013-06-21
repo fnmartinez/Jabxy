@@ -1,6 +1,7 @@
 package ar.edu.itba.it.pdc.jabxy.services;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,7 +15,7 @@ public class UserService {
 
 	private static Map<String, JabxyUser> knownUsers = new HashMap<String, JabxyUser>();
 
-	public static JabxyUser getUser(OpeningStreamMessage openingStreamStanza) {
+	public static JabxyUser touchUser(OpeningStreamMessage openingStreamStanza) {
 		// TODO Auto-generated method stub
 		if (StringUtils.isBlank(openingStreamStanza.getFrom())) {
 			return null;
@@ -31,5 +32,18 @@ public class UserService {
 		
 		return user;
 	}
-
+	
+	public static JabxyUser getUser(String userName){
+		return knownUsers.get(userName);
+	}
+	
+	public static ArrayList<JabxyUser> getAllUsers(){
+		
+		ArrayList<JabxyUser> users = new ArrayList<JabxyUser>();
+		
+		for(String userName : knownUsers.keySet()){
+			users.add(knownUsers.get(userName));
+		}
+		return users;
+	}
 }

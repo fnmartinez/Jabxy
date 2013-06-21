@@ -74,7 +74,7 @@ public class JabxyHandler implements ProxyEventHandler{
 		if (user.getFilters().filter(msg)) {
 			if (msg instanceof OpeningStreamMessage) {
 				OpeningStreamMessage osStanza = (OpeningStreamMessage) msg;
-				this.user = UserService.getUser(osStanza);
+				this.user = UserService.touchUser(osStanza);
 				facade.connectOutput(osStanza.getTo(), JabberProtocol.DEFAULT_PORT);
 				this.establishingConnection = true;
 			} else {

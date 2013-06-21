@@ -2,6 +2,7 @@ package ar.edu.itba.it.pdc.jabxy.model.jabber;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.ByteBuffer;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -9,6 +10,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 
@@ -83,5 +85,26 @@ public class JabberProtocol {
 		}
 		
 		return stanza;
+	}
+	
+	
+	public JabberMessage createErrorMessage(String from, String to){
+		
+		String message = "<message from='"+from+"' to='"+to+"'>";
+		message += "<error type='cancel'><service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></error>";
+		message += "</message>";
+		
+	    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();  
+	    DocumentBuilder builder;  
+	    try  
+	    {  
+	        builder = factory.newDocumentBuilder();  
+	        Document document = builder.parse(new InputSource(new StringReader(message)));
+	        return new MessageStanza(document);
+	    } catch (Exception e) {  
+	        e.printStackTrace();  
+	    }
+	    
+	    return null;
 	}
 }

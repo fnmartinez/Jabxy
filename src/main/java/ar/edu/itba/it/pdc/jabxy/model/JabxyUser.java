@@ -1,7 +1,6 @@
 package ar.edu.itba.it.pdc.jabxy.model;
 
 import java.net.InetSocketAddress;
-
 import ar.edu.itba.it.pdc.jabxy.model.filters.FilterChain;
 import ar.edu.itba.it.pdc.jabxy.model.transformations.TransformationChain;
 
@@ -15,7 +14,7 @@ public class JabxyUser {
 	public JabxyUser(String jId, InetSocketAddress defaultServerAddress) {
 		this.jId = jId;
 		this.defaultServerAddress = defaultServerAddress;
-		this.filters = new FilterChain();
+		this.filters = new FilterChain(this);
 		this.transformations = new TransformationChain();
 	}
 

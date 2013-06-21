@@ -23,14 +23,19 @@ public class Jabxy {
 	public static Acceptor configAcceptor;
 
 	public static void main(String[] args) {
+		//TODO: configuracion...
+		
+		int defaultJabberPort = 5233;
+        int defaultAdminPort = 8888;
+		
 		try {
-			jabberAcceptor = new BasicSocketAcceptor(5233,
+			jabberAcceptor = new BasicSocketAcceptor(defaultJabberPort,
 					new JabxyHandlerFactory(), new NioProxyDispatcher(
 							executor, new ReadWriteBlockingGuard(),
 							InputQueueFactory
 									.newInstance(new StanzaValidator()),
 							OutputQueueFactory.newInstance()));
-			configAcceptor = new BasicSocketAcceptor(8888,
+			configAcceptor = new BasicSocketAcceptor(defaultAdminPort,
 					new AdministratorHandlerFactory(),
 					new NioServerDispatcher(executor,
 							new ReadWriteBlockingGuard(),

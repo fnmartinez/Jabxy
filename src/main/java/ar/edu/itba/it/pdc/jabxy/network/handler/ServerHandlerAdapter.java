@@ -36,8 +36,8 @@ public class ServerHandlerAdapter extends AbstractHandlerAdapter {
 
 			// must process all buffered messages because Selector will
 			// not fire again for input that's already read and buffered
-			while ((message = getHandler().nextMessage(this)) != null) {
-				getHandler().handleInput(message, this);
+			while ((message = ((ServerEventHandler)getHandler()).nextMessage(this)) != null) {
+				((ServerEventHandler)getHandler()).handleInput(message, this);
 			}
 		} finally {
 			synchronized (stateChangeLock) {
