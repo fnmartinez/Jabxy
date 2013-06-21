@@ -5,14 +5,14 @@ import java.net.InetSocketAddress;
 import ar.edu.itba.it.pdc.jabxy.model.filters.FilterChain;
 import ar.edu.itba.it.pdc.jabxy.model.transformations.TransformationChain;
 
-public class JabberUser {
+public class JabxyUser {
 	private final InetSocketAddress defaultServerAddress;
 	private String jId;
 	private InetSocketAddress serverAddress;
 	private FilterChain filters;
 	private TransformationChain transformations;
 
-	public JabberUser(String jId, InetSocketAddress defaultServerAddress) {
+	public JabxyUser(String jId, InetSocketAddress defaultServerAddress) {
 		this.jId = jId;
 		this.defaultServerAddress = defaultServerAddress;
 		this.filters = new FilterChain();

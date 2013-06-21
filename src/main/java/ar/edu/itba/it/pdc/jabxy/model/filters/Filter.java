@@ -1,8 +1,8 @@
 package ar.edu.itba.it.pdc.jabxy.model.filters;
 
-import ar.edu.itba.it.pdc.jabxy.model.stanzas.Stanza;
+import ar.edu.itba.it.pdc.jabxy.model.jabber.JabberMessage;
 
 public interface Filter {
 
-	boolean filter(Stanza stanza);
+	boolean filter(JabberMessage stanza);
 }

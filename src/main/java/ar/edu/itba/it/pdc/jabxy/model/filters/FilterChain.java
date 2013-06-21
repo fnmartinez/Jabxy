@@ -3,7 +3,7 @@ package ar.edu.itba.it.pdc.jabxy.model.filters;
 import java.util.LinkedList;
 import java.util.List;
 
-import ar.edu.itba.it.pdc.jabxy.model.stanzas.Stanza;
+import ar.edu.itba.it.pdc.jabxy.model.jabber.JabberMessage;
 
 public class FilterChain {
 	
@@ -13,12 +13,12 @@ public class FilterChain {
 		this.filters = new LinkedList<Filter>();
 	}
 	
-	public boolean filter(Stanza stanza) {
+	public boolean filter(JabberMessage stanza) {
 		boolean accepted = true;
 		for(Filter f : filters) {
 			accepted = accepted && f.filter(stanza);
 			if (!accepted) {
-				return accepted;
+				break;
 			}
 		}
 		return accepted;

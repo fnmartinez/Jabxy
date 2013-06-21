@@ -2,11 +2,11 @@ package ar.edu.itba.it.pdc.jabxy.model.administration;
 
 import java.nio.ByteBuffer;
 
-import ar.edu.itba.it.pdc.jabxy.network.handler.EventHandler;
+import ar.edu.itba.it.pdc.jabxy.network.handler.ServerEventHandler;
 import ar.edu.itba.it.pdc.jabxy.network.queues.InputQueue;
 import ar.edu.itba.it.pdc.jabxy.network.utils.ChannelFacade;
 
-public class AdminHandler implements EventHandler {
+public class AdminHandler implements ServerEventHandler {
 
 	private AdminProtocol protocol;
 	
@@ -33,6 +33,12 @@ public class AdminHandler implements EventHandler {
 	public void handleInput(ByteBuffer message, ChannelFacade channelFacade) {
 		ByteBuffer response = protocol.handleMessage(message);
 		channelFacade.outputQueue().enqueue(response);
+	}
+
+	@Override
+	public void handleConnection(ChannelFacade facade) {
+		facade.outputQueue().enqueue(this.protocol.receptionResponse());
+		
 	}
 
 	@Override

@@ -3,7 +3,7 @@ package ar.edu.itba.it.pdc.jabxy.model.transformations;
 import java.util.LinkedList;
 import java.util.List;
 
-import ar.edu.itba.it.pdc.jabxy.model.stanzas.Stanza;
+import ar.edu.itba.it.pdc.jabxy.model.jabber.JabberMessage;
 
 public class TransformationChain {
 	
@@ -13,11 +13,11 @@ public class TransformationChain {
 		this.transformations = new LinkedList<Transformation>();
 	}
 	
-	public Stanza transform(Stanza stanza) {
+	public JabberMessage transform(JabberMessage message) {
 		for(Transformation t: transformations) {
-			stanza = t.transform(stanza);
+			message = t.transform(message);
 		}
-		return stanza;
+		return message;
 	}
 	
 	public void add(Transformation t) {

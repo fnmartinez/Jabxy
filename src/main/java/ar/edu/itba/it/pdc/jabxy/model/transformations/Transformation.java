@@ -1,9 +1,9 @@
 package ar.edu.itba.it.pdc.jabxy.model.transformations;
 
-import ar.edu.itba.it.pdc.jabxy.model.stanzas.Stanza;
+import ar.edu.itba.it.pdc.jabxy.model.jabber.JabberMessage;
 
 public interface Transformation {
 	
-	public Stanza transform(Stanza stanza);
+	public JabberMessage transform(JabberMessage message);
 
 }

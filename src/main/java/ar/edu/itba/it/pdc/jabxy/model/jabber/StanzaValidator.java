@@ -1,4 +1,4 @@
-package ar.edu.itba.it.pdc.jabxy.model;
+package ar.edu.itba.it.pdc.jabxy.model.jabber;
 
 import java.nio.ByteBuffer;
 import java.util.Deque;

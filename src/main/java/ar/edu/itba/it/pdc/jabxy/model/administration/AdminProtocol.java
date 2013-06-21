@@ -49,9 +49,13 @@ public class AdminProtocol {
 	private String interpretCommand(String commandLine) {
 		String[] tokens = commandLine.split("\\s");
 		Command cmd = null;
-		if (tokens.length == 1
-				&& tokens[0].equalsIgnoreCase(AdminProtocolActions.HELP.string)) {
-
+		if (tokens.length == 1)
+		{
+			if (tokens[0].equalsIgnoreCase(AdminProtocolActions.HELP.string)) {
+			}
+			else{
+				return createErrorResponse("Action unknown or unsupported");
+			}
 		}
 		if ((cmd = commands.get(tokens[1])) != null) {
 			if (tokens[0].equalsIgnoreCase(AdminProtocolActions.GET.string)) {
@@ -129,4 +133,10 @@ public class AdminProtocol {
 		return ByteBuffer.allocate(0).asReadOnlyBuffer();
 	}
 
+	public ByteBuffer receptionResponse() {
+		String response = OK_RESPONSE.concat(END_OF_RESPONSE);
+		ByteBuffer bf = ByteBuffer.allocate(response.length());
+		bf.put(response.getBytes());
+		return bf;
+	}
 }

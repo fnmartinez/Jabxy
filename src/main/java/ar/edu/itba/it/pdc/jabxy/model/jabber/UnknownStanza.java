@@ -1,4 +1,4 @@
-package ar.edu.itba.it.pdc.jabxy.model.stanzas;
+package ar.edu.itba.it.pdc.jabxy.model.jabber;
 
 import org.w3c.dom.Document;
 
