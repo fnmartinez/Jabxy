@@ -20,8 +20,9 @@ import ar.edu.itba.it.pdc.jabxy.network.handler.EventHandlerFactory;
  * Acceptor implementation for a single dispatcher type.
  * 
  */
-public class BasicAcceptor implements Acceptor {
+public class BasicSocketAcceptor implements Acceptor {
 
+	@SuppressWarnings("rawtypes")
 	private final Dispatcher dispatcher;
 	private final EventHandlerFactory eventHandlerFactory;
 	private final ServerSocketChannel listenSocket;
@@ -30,12 +31,19 @@ public class BasicAcceptor implements Acceptor {
 	private Logger logger = Logger.getLogger(getClass().getName());
 	private volatile boolean running = true;
 
-	public BasicAcceptor(int port,
+	@SuppressWarnings("rawtypes")
+	public BasicSocketAcceptor(int port,
 			EventHandlerFactory eventHandlerFactory, Dispatcher dispatcher) throws IOException {
+		this(new InetSocketAddress(port), eventHandlerFactory, dispatcher);
+	}
+	
+	@SuppressWarnings("rawtypes")
+	public BasicSocketAcceptor(InetSocketAddress listenAddress,
+			EventHandlerFactory eventHandlerFactory, Dispatcher dispatcher) throws IOException{
 		this.dispatcher = dispatcher;
 		this.eventHandlerFactory = eventHandlerFactory;
 		this.listenSocket = ServerSocketChannel.open();
-		this.listenSocket.bind(new InetSocketAddress(port));
+		this.listenSocket.bind(listenAddress);
 		this.listenSocket.configureBlocking(true);
 		this.listener = new Listener();
 	}
@@ -43,10 +51,11 @@ public class BasicAcceptor implements Acceptor {
 	@Override
 	public synchronized Thread newThread() {
 		Thread thread = new Thread(listener);
-
 		threads.add(thread);
-
 		thread.start();
+		
+		thread = dispatcher.start();
+		threads.add(thread);
 
 		return thread;
 	}
@@ -83,6 +92,7 @@ public class BasicAcceptor implements Acceptor {
 	}
 
 	private class Listener implements Runnable {
+		@SuppressWarnings("unchecked")
 		public void run() {
 			while (running) {
 				try {

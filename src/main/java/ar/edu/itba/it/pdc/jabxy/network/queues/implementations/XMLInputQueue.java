@@ -10,9 +10,9 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.lang.StringUtils;
 import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
 import uk.org.retep.niosax.NioSaxParser;
 import uk.org.retep.niosax.NioSaxParserFactory;
@@ -25,7 +25,7 @@ import ar.edu.itba.it.pdc.jabxy.network.utils.BufferFactory;
 
 import com.google.common.base.Charsets;
 
-public class XMLInputQueue extends DefaultHandler implements InputQueue, NioSaxParserHandler {
+public class XMLInputQueue extends ValidatedInputQueue implements InputQueue, ContentHandler, NioSaxParserHandler {
 
 	private NioSaxParser parser;
 	private NioSaxSource source;
@@ -37,8 +37,7 @@ public class XMLInputQueue extends DefaultHandler implements InputQueue, NioSaxP
 
 	public XMLInputQueue(BufferFactory bufferFactory, XMLValidator validator)
 			throws SAXException, ParserConfigurationException {
-		this.bufferFactory = bufferFactory;
-		this.validator = validator;
+		super(bufferFactory, validator);
 
 		NioSaxParserFactory factory = NioSaxParserFactory.getInstance();
 		this.parser = factory.newInstance(this);
@@ -65,7 +64,7 @@ public class XMLInputQueue extends DefaultHandler implements InputQueue, NioSaxP
 		return bytesRead;
 	}
 
-	public void getValidated(){
+	private void getValidated(){
 		
 		if(this.validator.isValidMessage() != -1){
 			int size = 0;
@@ -111,6 +110,11 @@ public class XMLInputQueue extends DefaultHandler implements InputQueue, NioSaxP
 		}
 
 		return result;
+	}
+	
+	@Override
+	public ByteBuffer dequeueValidatedMessage() {
+		return this.validatedElements.poll();
 	}
 
 	@Override

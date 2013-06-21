@@ -5,7 +5,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 
 import ar.edu.itba.it.pdc.jabxy.network.queues.exceptions.QueueBuildingException;
-import ar.edu.itba.it.pdc.jabxy.network.queues.implementations.ValidatedInputQueue;
 import ar.edu.itba.it.pdc.jabxy.network.queues.implementations.XMLInputQueue;
 import ar.edu.itba.it.pdc.jabxy.network.utils.BufferFactory;
 
@@ -42,7 +41,8 @@ public class ValidatedInputQueueFactory extends InputQueueFactory {
 				throw new QueueBuildingException(e);
 			}
 		}
-		return new ValidatedInputQueue(bufferFactory, newValidator);
+		
+		throw new QueueBuildingException();
 	}
 
 }

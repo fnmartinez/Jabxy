@@ -2,11 +2,11 @@ package ar.edu.itba.it.pdc.jabxy.network.queues;
 
 import ar.edu.itba.it.pdc.jabxy.network.queues.exceptions.QueueBuildingException;
 import ar.edu.itba.it.pdc.jabxy.network.utils.BufferFactory;
-import ar.edu.itba.it.pdc.jabxy.tests.DumbBufferFactory;
+import ar.edu.itba.it.pdc.jabxy.network.utils.SimpleBufferFactory;
 
 public abstract class InputQueueFactory {
 	
-	private static BufferFactory defaultBufferFactory = new DumbBufferFactory(1024);
+	private static BufferFactory defaultBufferFactory = new SimpleBufferFactory(1024);
 	
 	public static InputQueueFactory newInstance() {
 		return new BasicInputQueueFactory(defaultBufferFactory);

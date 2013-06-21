@@ -5,7 +5,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import ar.edu.itba.it.pdc.jabxy.network.acceptor.Acceptor;
-import ar.edu.itba.it.pdc.jabxy.network.acceptor.implementations.BasicAcceptor;
+import ar.edu.itba.it.pdc.jabxy.network.acceptor.implementations.BasicSocketAcceptor;
 import ar.edu.itba.it.pdc.jabxy.network.dispatcher.Dispatcher;
 import ar.edu.itba.it.pdc.jabxy.network.dispatcher.implementation.NioServerDispatcher;
 import ar.edu.itba.it.pdc.jabxy.network.dispatcher.implementation.ReadWriteBlockingGuard;
@@ -26,7 +26,7 @@ public class NadaServer {
 				new ReadWriteBlockingGuard(), InputQueueFactory.newInstance(),
 				OutputQueueFactory.newInstance());
 		EventHandlerFactory factory = new NadaProtocol();
-		Acceptor acceptor = new BasicAcceptor(1234, factory, dispatcher);
+		Acceptor acceptor = new BasicSocketAcceptor(1234, factory, dispatcher);
 
 		dispatcher.start();
 		acceptor.newThread();

@@ -12,4 +12,8 @@ public class QueueBuildingException extends Exception {
 		super(e);
 	}
 
+	public QueueBuildingException() {
+		super();
+	}
+
 }
