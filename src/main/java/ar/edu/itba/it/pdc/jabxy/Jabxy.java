@@ -29,6 +29,11 @@ public class Jabxy {
 	public static Acceptor configAcceptor;
 
 	public static void main(String[] args) {
+		//TODO: configuracion...
+		
+		int defaultJabberPort = 5233;
+        int defaultAdminPort = 8888;
+		
 		try {
 			jabberAcceptor = new BasicSocketAcceptor<JabxyHandler, ProxyChannelFacade, ProxyHandlerAdapter<JabxyHandler>>(5233,
 					new JabxyHandlerFactory(), new NioProxyDispatcher<JabxyHandler>(

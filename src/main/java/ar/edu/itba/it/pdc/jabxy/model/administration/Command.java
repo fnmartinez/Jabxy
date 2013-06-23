@@ -13,5 +13,4 @@ public interface Command {
 	String descriptiveHelp();
 	
 	boolean acceptsAction(AdminProtocolActions action);
-	
 }
