@@ -7,19 +7,18 @@ import ar.edu.itba.it.pdc.jabxy.network.handler.EventHandler;
 import ar.edu.itba.it.pdc.jabxy.network.handler.HandlerAdapter;
 import ar.edu.itba.it.pdc.jabxy.network.utils.ChannelFacade;
 
-public interface Dispatcher {
+public interface Dispatcher<H extends EventHandler, F extends ChannelFacade, A extends HandlerAdapter<H>> {
 
 	void dispatch() throws IOException;
 
 	void shutdown();
 
-	ChannelFacade registerChannel(SelectableChannel channel,
-			EventHandler handler) throws IOException;
+	F registerChannel(SelectableChannel channel,
+			H handler) throws IOException;
 
-	void unregisterChannel(ChannelFacade key);
+	void unregisterChannel(F key);
 
-	void enqueueStatusChange(HandlerAdapter adapter);
+	void enqueueStatusChange(A adapter, Object handle);
 
-	//TODO: Ver si va
 	Thread start();
 }

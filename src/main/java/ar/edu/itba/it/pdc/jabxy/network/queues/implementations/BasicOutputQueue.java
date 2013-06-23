@@ -3,7 +3,6 @@ package ar.edu.itba.it.pdc.jabxy.network.queues.implementations;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
-import java.nio.channels.SelectionKey;
 import java.util.Deque;
 import java.util.LinkedList;
 
@@ -77,7 +76,7 @@ public class BasicOutputQueue implements OutputQueue {
 		}
 
 		if (facade != null) {
-			facade.modifyInterestOps(SelectionKey.OP_WRITE, 0);
+			facade.enableWriting();
 		}
 
 		return true;

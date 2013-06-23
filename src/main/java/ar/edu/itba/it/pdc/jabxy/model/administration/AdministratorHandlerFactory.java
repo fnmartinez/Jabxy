@@ -1,9 +1,8 @@
 package ar.edu.itba.it.pdc.jabxy.model.administration;
 
-import ar.edu.itba.it.pdc.jabxy.network.handler.EventHandler;
 import ar.edu.itba.it.pdc.jabxy.network.handler.EventHandlerFactory;
 
-public class AdministratorHandlerFactory implements EventHandlerFactory {
+public class AdministratorHandlerFactory implements EventHandlerFactory<AdminHandler> {
 
 	private AdminProtocol protocol;
 	
@@ -12,7 +11,7 @@ public class AdministratorHandlerFactory implements EventHandlerFactory {
 	}
 	
 	@Override
-	public EventHandler newHandler() throws IllegalAccessException,
+	public AdminHandler newHandler() throws IllegalAccessException,
 			InstantiationException {
 		return new AdminHandler(protocol);
 	}

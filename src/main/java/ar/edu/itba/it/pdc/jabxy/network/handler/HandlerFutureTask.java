@@ -1,40 +1,45 @@
 package ar.edu.itba.it.pdc.jabxy.network.handler;
 
+import java.nio.channels.SelectionKey;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
 import org.apache.log4j.Logger;
 
 import ar.edu.itba.it.pdc.jabxy.network.dispatcher.Dispatcher;
+import ar.edu.itba.it.pdc.jabxy.network.utils.ChannelFacade;
 
-public class HandlerFutureTask extends FutureTask<HandlerAdapter> implements Runnable {
+public class HandlerFutureTask<H extends EventHandler, F extends ChannelFacade, A extends HandlerAdapter<H>>
+		extends FutureTask<A> implements Runnable {
 
-	private final HandlerAdapter adapter;
+	private final HandlerAdapter<H> adapter;
 	private Logger logger = Logger.getLogger(HandlerFutureTask.class);
-	private Dispatcher dispatcher;
-
-	public HandlerFutureTask (HandlerAdapter adapter, Dispatcher dispatcher)
-	{
-		super (adapter);
+	private Dispatcher<H,F,A> dispatcher;
+	private SelectionKey key;
+	
+	@SuppressWarnings("unchecked")
+	public HandlerFutureTask(A adapter, Dispatcher<H,F,A> dispatcher, SelectionKey key) {
+		super((Callable<A>) adapter);
 		this.adapter = adapter;
 		this.dispatcher = dispatcher;
 	}
 
-	protected void done()
-	{
-		dispatcher.enqueueStatusChange(adapter);
+	@SuppressWarnings("unchecked")
+	protected void done() {
+		dispatcher.enqueueStatusChange((A)adapter, key);
 
 		try {
 			// Get result returned by call(), or cause
-			// deferred exception to be thrown.  We know
+			// deferred exception to be thrown. We know
 			// the result will be the adapter instance
 			// stored above, so we ignore it.
 			get();
 
-		// Extension point: You may choose to extend the
-		// InputHandler and HandlerAdapter classes to add
-		// methods for handling these exceptions.  This
-		// method is still running in the worker thread.
+			// Extension point: You may choose to extend the
+			// InputHandler and HandlerAdapter classes to add
+			// methods for handling these exceptions. This
+			// method is still running in the worker thread.
 		} catch (ExecutionException e) {
 			adapter.die();
 			logger.error("Handler died", e.getCause());

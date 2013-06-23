@@ -12,21 +12,22 @@ import org.apache.log4j.Logger;
 
 import ar.edu.itba.it.pdc.jabxy.network.dispatcher.Dispatcher;
 import ar.edu.itba.it.pdc.jabxy.network.dispatcher.SelectorGuard;
+import ar.edu.itba.it.pdc.jabxy.network.handler.EventHandler;
 import ar.edu.itba.it.pdc.jabxy.network.handler.HandlerAdapter;
-import ar.edu.itba.it.pdc.jabxy.network.handler.HandlerFutureTask;
-import ar.edu.itba.it.pdc.jabxy.network.handler.ServerHandlerAdapter;
 import ar.edu.itba.it.pdc.jabxy.network.queues.InputQueueFactory;
 import ar.edu.itba.it.pdc.jabxy.network.queues.OutputQueueFactory;
+import ar.edu.itba.it.pdc.jabxy.network.utils.ChannelFacade;
 
-public abstract class AbstractNioDispatcher implements Dispatcher, Runnable {
+public abstract class AbstractNioDispatcher<H extends EventHandler, F extends ChannelFacade, A extends HandlerAdapter<H>> 
+				implements Dispatcher<H,F,A>, Runnable {
 	// TODO: revisar la posibilidad de cambiar a AtomicReference el Selector
 	// para evitar el SelectorGuard
 	private final Logger logger = Logger.getLogger(getClass().getName());
-	private final Executor executor;
 	private final Selector selector;
-	private final BlockingQueue<HandlerAdapter> statusChangeQueue;
+	private final BlockingQueue<Pair<A, Object>> statusChangeQueue;
 	private final SelectorGuard guard;
 	private volatile boolean dispatching = true;
+	protected final Executor executor;
 	protected final InputQueueFactory inputQueueFactory;
 	protected final OutputQueueFactory outputQueueFactory;
 	
@@ -36,11 +37,14 @@ public abstract class AbstractNioDispatcher implements Dispatcher, Runnable {
 		this.executor = executor;
 		this.guard = guard;
 		
-		statusChangeQueue = new ArrayBlockingQueue<HandlerAdapter>(100);
+		statusChangeQueue = new ArrayBlockingQueue<Pair<A, Object>>(100);
 		selector = Selector.open();
 		this.guard.setSelector(this.selector);
 	}
+	
+	protected abstract void invokeHandler(A adapter, SelectionKey key);
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void dispatch() throws IOException {
 		while (dispatching) {
@@ -53,9 +57,9 @@ public abstract class AbstractNioDispatcher implements Dispatcher, Runnable {
 			Set<SelectionKey> keys = selector.selectedKeys();
 
 			for (SelectionKey key : keys) {
-				ServerHandlerAdapter adapter = (ServerHandlerAdapter) key.attachment();
+				A adapter = (A) key.attachment();
 
-				invokeHandler(adapter);
+				invokeHandler(adapter, key);
 			}
 
 			keys.clear();
@@ -70,13 +74,13 @@ public abstract class AbstractNioDispatcher implements Dispatcher, Runnable {
 	}
 
 	@Override
-	public void enqueueStatusChange(HandlerAdapter adapter) {
+	public void enqueueStatusChange(A adapter, Object handle) {
 		boolean interrupted = false;
-
+		Pair<A, Object> pair = new Pair<A, Object>(adapter, handle);
 		try {
 			while (true) {
 				try {
-					statusChangeQueue.put(adapter);
+					statusChangeQueue.put(pair);
 					selector.wakeup();
 					return;
 				} catch (InterruptedException e) {
@@ -89,6 +93,7 @@ public abstract class AbstractNioDispatcher implements Dispatcher, Runnable {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void run() {
 		try {
@@ -100,9 +105,9 @@ public abstract class AbstractNioDispatcher implements Dispatcher, Runnable {
 		Set<SelectionKey> keys = selector.selectedKeys();
 
 		for (SelectionKey key : keys) {
-			ServerHandlerAdapter adapter = (ServerHandlerAdapter) key.attachment();
+			A adapter = (A) key.attachment();
 
-			unregisterChannel(adapter);
+			unregisterChannel((F)adapter);
 		}
 
 		try {
@@ -112,30 +117,20 @@ public abstract class AbstractNioDispatcher implements Dispatcher, Runnable {
 		}
 	}
 
-	private void invokeHandler(ServerHandlerAdapter adapter) {
-		adapter.prepareToRun();
-		adapter.key().interestOps(0);
-
-		executor.execute(new HandlerFutureTask(adapter, this));
-	}
-
+	@SuppressWarnings("unchecked")
 	private void checkStatusChangeQueue() {
-		HandlerAdapter adapter;
+		Pair<A, Object> pair;
 
-		while ((adapter = statusChangeQueue.poll()) != null) {
+		while ((pair = statusChangeQueue.poll()) != null) {
+			A adapter = pair.getObject();
+			Object handle = pair.getHandle();
+			
 			if (adapter.isDead()) {
-				unregisterChannel(adapter);
+				unregisterChannel((F)adapter);
 			} else {
-				resumeSelection(adapter);
+				adapter.confirmSelection(handle);
 			}
 		}
-	}
-
-	private void resumeSelection(HandlerAdapter adapter) {
-		SelectionKey key = adapter.key();
-
-		if (key.isValid())
-			key.interestOps(adapter.getInterestOps());
 	}
 
 	@Override
@@ -157,5 +152,23 @@ public abstract class AbstractNioDispatcher implements Dispatcher, Runnable {
 	
 	void releaseSelector() {
 		guard.releaseSelector();
+	}
+	
+	private class Pair<T, S> {
+		private final T object;
+		private final S handle;
+		
+		public Pair(T object, S handle) {
+			this.object = object;
+			this.handle = handle;
+		}
+		
+		public T getObject() {
+			return this.object;
+		}
+		
+		public S getHandle() {
+			return this.handle;
+		}
 	}
 }

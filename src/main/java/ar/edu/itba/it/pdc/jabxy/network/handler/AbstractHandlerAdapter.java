@@ -1,28 +1,25 @@
 package ar.edu.itba.it.pdc.jabxy.network.handler;
 
-import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 
 import ar.edu.itba.it.pdc.jabxy.network.dispatcher.Dispatcher;
 import ar.edu.itba.it.pdc.jabxy.network.queues.InputQueue;
 import ar.edu.itba.it.pdc.jabxy.network.queues.OutputQueue;
+import ar.edu.itba.it.pdc.jabxy.network.utils.ChannelFacade;
 
-public abstract class AbstractHandlerAdapter implements HandlerAdapter {
+public abstract class AbstractHandlerAdapter<H extends EventHandler, F extends ChannelFacade, A extends HandlerAdapter<H>> implements HandlerAdapter<H>, ChannelFacade {
 
-	private final Dispatcher dispatcher;
-	private final InputQueue inputQueue;
-	private final OutputQueue outputQueue;
-	private final Object stateChangeLock = new Object();
-	private EventHandler eventHandler;
-	private SelectionKey key = null;
-	private SelectableChannel channel;
-	private volatile int interestOps = 0;
-	private int readyOps = 0;
-	private volatile boolean running = false;
-	private volatile boolean dead = false;
+	protected final Dispatcher<H, F, A> dispatcher;
+	protected final InputQueue inputQueue;
+	protected final OutputQueue outputQueue;
+	protected final Object stateChangeLock = new Object();
+	protected H eventHandler;
+	protected volatile boolean running = false;
+	protected volatile boolean dead = false;
 
-	public AbstractHandlerAdapter(Dispatcher dispatcher, InputQueue inputQueue,
-			OutputQueue outputQueue, EventHandler eventHandler) {
+	public AbstractHandlerAdapter(Dispatcher<H, F, A> dispatcher,
+			InputQueue inputQueue, OutputQueue outputQueue,
+			H eventHandler) {
 		this.dispatcher = dispatcher;
 		this.inputQueue = inputQueue;
 		this.outputQueue = outputQueue;
@@ -31,8 +28,11 @@ public abstract class AbstractHandlerAdapter implements HandlerAdapter {
 	}
 
 	@Override
-	public abstract HandlerAdapter call() throws Exception;
-
+	public abstract HandlerAdapter<H> call() throws Exception;
+	
+	@Override
+	public abstract void prepareToRun(SelectionKey key);
+	
 	@Override
 	public InputQueue inputQueue() {
 		return this.inputQueue;
@@ -44,49 +44,12 @@ public abstract class AbstractHandlerAdapter implements HandlerAdapter {
 	}
 
 	@Override
-	public void setHandler(EventHandler handler) {
+	public void setHandler(H handler) {
 		this.eventHandler = handler;
 	}
-	
-	public EventHandler getHandler() {
+
+	public H getHandler() {
 		return this.eventHandler;
-	}
-
-	@Override
-	public int getInterestOps() {
-		return interestOps;
-	}
-
-	@Override
-	public void modifyInterestOps(int opsToSet, int opsToReset) {
-		synchronized (stateChangeLock) {
-			interestOps = (interestOps | opsToSet) & (~opsToReset);
-
-			if (!running) {
-				dispatcher.enqueueStatusChange(this);
-			}
-		}
-	}
-
-	@Override
-	public void prepareToRun() {
-		synchronized (stateChangeLock) {
-			interestOps = key.interestOps();
-			readyOps = key.readyOps();
-			running = true;
-		}
-	}
-
-	@Override
-	public void setKey(SelectionKey key) {
-		this.key = key;
-		setChannel(key.channel());
-		interestOps = key.interestOps();
-	}
-
-	@Override
-	public SelectionKey key() {
-		return key;
 	}
 
 	@Override
@@ -108,35 +71,29 @@ public abstract class AbstractHandlerAdapter implements HandlerAdapter {
 	@Override
 	public void unregistering() {
 		eventHandler.stopping(this);
-
 	}
 
 	@Override
 	public void unregistered() {
 		eventHandler.stopped(this);
-
 	}
 
 	@Override
 	public void die() {
 		this.dead = true;
 	}
-
-	public SelectableChannel getChannel() {
-		return channel;
-	}
-
-	public void setChannel(SelectableChannel channel) {
-		this.channel = channel;
+	
+	protected int modifyInterestOps(int ops, int opsToSet, int opsToReset) {
+		ops = (ops | opsToSet) & (~opsToReset);
+		return ops; 
 	}
 	
-	public int getReadyOps() {
-		return readyOps;
+	@SuppressWarnings("unchecked")
+	protected void issueChange(SelectionKey key) {
+		synchronized (stateChangeLock) {
+			if (!running) {
+				dispatcher.enqueueStatusChange((A) this, key);
+			}
+		}
 	}
-
-	//TODO: revisar esto
-	public void setRunning(boolean running) {
-		this.running = running;
-	}
-	
 }

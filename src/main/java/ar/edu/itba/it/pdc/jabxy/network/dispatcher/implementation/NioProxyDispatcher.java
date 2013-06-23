@@ -1,6 +1,7 @@
 package ar.edu.itba.it.pdc.jabxy.network.dispatcher.implementation;
 
 import java.io.IOException;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.util.concurrent.Executor;
@@ -11,16 +12,15 @@ import org.apache.log4j.Logger;
 import org.xml.sax.SAXException;
 
 import ar.edu.itba.it.pdc.jabxy.network.dispatcher.SelectorGuard;
-import ar.edu.itba.it.pdc.jabxy.network.handler.AbstractHandlerAdapter;
-import ar.edu.itba.it.pdc.jabxy.network.handler.EventHandler;
-import ar.edu.itba.it.pdc.jabxy.network.handler.HandlerAdapter;
+import ar.edu.itba.it.pdc.jabxy.network.handler.HandlerFutureTask;
+import ar.edu.itba.it.pdc.jabxy.network.handler.ProxyEventHandler;
 import ar.edu.itba.it.pdc.jabxy.network.handler.ProxyHandlerAdapter;
 import ar.edu.itba.it.pdc.jabxy.network.queues.InputQueueFactory;
 import ar.edu.itba.it.pdc.jabxy.network.queues.OutputQueueFactory;
 import ar.edu.itba.it.pdc.jabxy.network.queues.exceptions.QueueBuildingException;
-import ar.edu.itba.it.pdc.jabxy.network.utils.ChannelFacade;
+import ar.edu.itba.it.pdc.jabxy.network.utils.ProxyChannelFacade;
 
-public class NioProxyDispatcher extends AbstractNioDispatcher{
+public class NioProxyDispatcher<T extends ProxyEventHandler> extends AbstractNioDispatcher<T, ProxyChannelFacade, ProxyHandlerAdapter<T>> {
 	
 	private final Logger logger = Logger.getLogger(getClass().getName());
 	
@@ -28,15 +28,14 @@ public class NioProxyDispatcher extends AbstractNioDispatcher{
 		super(executor, guard, inputQueueFactory, outputQueueFactory);
 	}
 	
-
 	@Override
-	public ChannelFacade registerChannel(SelectableChannel channel,
-			EventHandler handler) throws IOException {
+	public ProxyChannelFacade registerChannel(SelectableChannel channel,
+			T handler) throws IOException {
 		channel.configureBlocking(false);
 
-		ProxyHandlerAdapter clientAdapter;
+		ProxyHandlerAdapter<T> clientAdapter;
 		try {
-			clientAdapter = new ProxyHandlerAdapter(this, inputQueueFactory.newInputQueue(), outputQueueFactory.newOutputQueue(), handler);
+			clientAdapter = new ProxyHandlerAdapter<T>(this, inputQueueFactory.newInputQueue(), outputQueueFactory.newOutputQueue(), handler);
 		} catch (SAXException e) {
 			throw new IOException(e);
 		} catch (ParserConfigurationException e) {
@@ -45,9 +44,6 @@ public class NioProxyDispatcher extends AbstractNioDispatcher{
 			throw new IOException(e);
 		}
 
-		ProxyHandlerAdapter serverAdapter = clientAdapter.getSibling();
-		
-		serverAdapter.registering();
 		clientAdapter.registering();
 
 		acquireSelector();
@@ -56,7 +52,7 @@ public class NioProxyDispatcher extends AbstractNioDispatcher{
 			SelectionKey key = channel.register(getSelector(), SelectionKey.OP_READ,
 					clientAdapter);
 
-			clientAdapter.setKey(key);
+			clientAdapter.setInputKey(key);
 			clientAdapter.registered();
 
 			return clientAdapter;
@@ -66,19 +62,20 @@ public class NioProxyDispatcher extends AbstractNioDispatcher{
 	}
 
 	@Override
-	public void unregisterChannel(ChannelFacade key) {
-		if (!(key instanceof AbstractHandlerAdapter)) {
+	public void unregisterChannel(ProxyChannelFacade facade) {
+		if (!(facade instanceof ProxyHandlerAdapter<?>)) {
 			throw new IllegalArgumentException("Not a valid registration token");
 		}
 
-		HandlerAdapter adapter = (HandlerAdapter) key;
-		SelectionKey selectionKey = adapter.key();
+		@SuppressWarnings("unchecked")
+		ProxyHandlerAdapter<T> adapter = (ProxyHandlerAdapter<T>) facade;
 
 		acquireSelector();
 
 		try {
 			adapter.unregistering();
-			selectionKey.cancel();
+			adapter.inputKey().cancel();
+			adapter.outputKey().cancel();
 		} finally {
 			releaseSelector();
 		}
@@ -86,4 +83,30 @@ public class NioProxyDispatcher extends AbstractNioDispatcher{
 		adapter.unregistered();
 	}
 
+	public void registerSibling(ProxyHandlerAdapter<T> proxyHandlerAdapter) throws ClosedChannelException {
+		// TODO Auto-generated method stub
+		ProxyHandlerAdapter<T> sibling = proxyHandlerAdapter.getSibling();
+
+		SelectableChannel channel = sibling.channel1();
+		acquireSelector();
+
+		try {
+			SelectionKey key = channel.register(getSelector(), SelectionKey.OP_CONNECT,
+					sibling);
+
+			sibling.setInputKey(key);
+			sibling.registered();
+
+			return;
+		} finally {
+			releaseSelector();
+		}
+	}
+
+	@Override
+	protected void invokeHandler(ProxyHandlerAdapter<T> adapter, SelectionKey key) {
+		adapter.prepareToRun(key);
+		key.interestOps(0);
+		executor.execute(new HandlerFutureTask<T, ProxyChannelFacade, ProxyHandlerAdapter<T>>(adapter, this, key));
+	}
 }

@@ -14,32 +14,32 @@ import org.apache.log4j.Logger;
 
 import ar.edu.itba.it.pdc.jabxy.network.acceptor.Acceptor;
 import ar.edu.itba.it.pdc.jabxy.network.dispatcher.Dispatcher;
+import ar.edu.itba.it.pdc.jabxy.network.handler.EventHandler;
 import ar.edu.itba.it.pdc.jabxy.network.handler.EventHandlerFactory;
+import ar.edu.itba.it.pdc.jabxy.network.handler.HandlerAdapter;
+import ar.edu.itba.it.pdc.jabxy.network.utils.ChannelFacade;
 
 /**
  * Acceptor implementation for a single dispatcher type.
  * 
  */
-public class BasicSocketAcceptor implements Acceptor {
+public class BasicSocketAcceptor<H extends EventHandler, F extends ChannelFacade, A extends HandlerAdapter<H>> implements Acceptor {
 
-	@SuppressWarnings("rawtypes")
-	private final Dispatcher dispatcher;
-	private final EventHandlerFactory eventHandlerFactory;
+	private final Dispatcher<H,F,A> dispatcher;
+	private final EventHandlerFactory<H> eventHandlerFactory;
 	private final ServerSocketChannel listenSocket;
 	private final Listener listener;
 	private final List<Thread> threads = new ArrayList<Thread>();
 	private Logger logger = Logger.getLogger(getClass().getName());
 	private volatile boolean running = true;
 
-	@SuppressWarnings("rawtypes")
 	public BasicSocketAcceptor(int port,
-			EventHandlerFactory eventHandlerFactory, Dispatcher dispatcher) throws IOException {
+			EventHandlerFactory<H> eventHandlerFactory, Dispatcher<H,F,A> dispatcher) throws IOException {
 		this(new InetSocketAddress(port), eventHandlerFactory, dispatcher);
 	}
 	
-	@SuppressWarnings("rawtypes")
 	public BasicSocketAcceptor(InetSocketAddress listenAddress,
-			EventHandlerFactory eventHandlerFactory, Dispatcher dispatcher) throws IOException{
+			EventHandlerFactory<H> eventHandlerFactory, Dispatcher<H,F,A> dispatcher) throws IOException{
 		this.dispatcher = dispatcher;
 		this.eventHandlerFactory = eventHandlerFactory;
 		this.listenSocket = ServerSocketChannel.open();
@@ -92,7 +92,6 @@ public class BasicSocketAcceptor implements Acceptor {
 	}
 
 	private class Listener implements Runnable {
-		@SuppressWarnings("unchecked")
 		public void run() {
 			while (running) {
 				try {

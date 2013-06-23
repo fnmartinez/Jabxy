@@ -48,22 +48,22 @@ public class JabberProtocol {
 	
 	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 	DocumentBuilder builder = factory.newDocumentBuilder();
-	private JabberProtocol instance;
+	private static JabberProtocol instance;
 	
 	private JabberProtocol() throws ParserConfigurationException {
 		this.factory = DocumentBuilderFactory.newInstance();
 		this.builder = factory.newDocumentBuilder();
 	}
 	
-	public JabberProtocol getInstance() throws ParserConfigurationException {
-		if (this.instance == null) {
+	public static JabberProtocol getInstance() throws ParserConfigurationException {
+		if (instance == null) {
 			try {
-				this.instance = new JabberProtocol();
+				instance = new JabberProtocol();
 			} catch (ParserConfigurationException e) {
 				throw new ParserConfigurationException("Could not instantiate Jabber Protocol");
 			}
 		}
-		return this.instance;
+		return instance;
 	}
 	
 	public Stanza getStanza(ByteBuffer byteBuffer) throws SAXException, IOException {

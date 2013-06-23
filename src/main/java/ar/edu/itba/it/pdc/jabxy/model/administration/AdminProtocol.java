@@ -133,7 +133,7 @@ public class AdminProtocol {
 		return ByteBuffer.allocate(0).asReadOnlyBuffer();
 	}
 
-	public ByteBuffer receptionResponse() {
+	public ByteBuffer receptionMessage() {
 		String response = OK_RESPONSE.concat(END_OF_RESPONSE);
 		ByteBuffer bf = ByteBuffer.allocate(response.length());
 		bf.put(response.getBytes());

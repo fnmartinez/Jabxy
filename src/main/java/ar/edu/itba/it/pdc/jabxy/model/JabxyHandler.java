@@ -3,6 +3,7 @@ package ar.edu.itba.it.pdc.jabxy.model;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
@@ -31,10 +32,11 @@ public class JabxyHandler implements ProxyEventHandler{
 	private Transformer transformer;
 	private boolean establishingConnection = false;
 	
-	public JabxyHandler() throws TransformerConfigurationException {
+	public JabxyHandler(JabberProtocol protocol) throws TransformerConfigurationException {
 		transFactory = TransformerFactory.newInstance();
 		transformer = transFactory.newTransformer();
 		transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+		this.protocol = protocol;
 	}
 
 	@Override
@@ -75,7 +77,12 @@ public class JabxyHandler implements ProxyEventHandler{
 			if (msg instanceof OpeningStreamMessage) {
 				OpeningStreamMessage osStanza = (OpeningStreamMessage) msg;
 				this.user = UserService.getUser(osStanza);
-				facade.connectOutput(osStanza.getTo(), JabberProtocol.DEFAULT_PORT);
+				try {
+					facade.connectOutput(osStanza.getTo(), JabberProtocol.DEFAULT_PORT);
+				} catch (ClosedChannelException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				this.establishingConnection = true;
 			} else {
 				msg = user.getTransformations().transform(msg);
